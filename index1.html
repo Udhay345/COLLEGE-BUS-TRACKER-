@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BusTrack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #1273fa;
+      --primary-dark: #0d47a1;
+      --white: #fff;
+      --card-shadow: 0 4px 24px 0 rgba(18, 115, 250, 0.08);
+    }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(180deg, #FFD600 0%, #fff 100%);
+      color: #111;
+      overflow-x: hidden;
+    }
+    .navbar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 32px 48px 0 48px;
+      box-sizing: border-box;
+      position: relative;
+    }
+    .navbar .brand {
+      display: flex;
+      align-items: center;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #111;
+      letter-spacing: 1px;
+    }
+    .navbar .brand i {
+      margin-right: 12px;
+      font-size: 1.5em;
+    }
+    .navbar .nav-links {
+      display: flex;
+      gap: 32px;
+    }
+    .navbar .nav-links a {
+      color: #111;
+      text-decoration: none;
+      font-size: 1.1rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .navbar .nav-links a:hover {
+      color: #FFD600;
+    }
+    .navbar-logo {
+      flex: 1 1 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .navbar-logo img {
+      width: 160px;
+      max-width: 90vw;
+      display: block;
+    }
+    .brand, .nav-links {
+      flex: 0 0 auto;
+    }
+    .hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-top: 40px;
+      margin-bottom: 24px;
+      padding: 0 4vw;
+    }
+    .hero-title {
+      font-size: 2.7rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      text-align: center;
+      letter-spacing: 1px;
+      color: #111;
+    }
+    .hero-subtitle {
+      font-size: 1.2rem;
+      font-weight: 400;
+      margin-bottom: 32px;
+      text-align: center;
+      color: #111;
+      max-width: 520px;
+    }
+    .bus-select-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0;
+      width: 100%;
+      max-width: 420px;
+    }
+    .bus-select {
+      padding: 0.8rem 1.2rem;
+      font-size: 1.1rem;
+      border-radius: 8px 0 0 8px;
+      border: none;
+      outline: none;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      background: #fff;
+      color: #222;
+      min-width: 180px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      flex: 1 1 0;
+    }
+    .select-btn {
+      padding: 0.8rem 1.6rem;
+      font-size: 1.1rem;
+      border-radius: 0 8px 8px 0;
+      border: none;
+      background: #0d5be7;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+    .select-btn:active {
+      background: #0b4bb3;
+    }
+    .main-cards {
+      display: flex;
+      gap: 40px;
+      justify-content: center;
+      margin-top: 36px;
+      flex-wrap: wrap;
+    }
+    .main-card {
+      background: #fff;
+      color: #111;
+      border-radius: 18px;
+      box-shadow: var(--card-shadow);
+      padding: 2.2rem 2.2rem 2rem 2.2rem;
+      min-width: 220px;
+      max-width: 340px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: box-shadow 0.2s, transform 0.2s;
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+    .main-card:hover {
+      box-shadow: 0 8px 32px 0 #1273fa33;
+      transform: translateY(-4px) scale(1.03);
+    }
+    .main-card .icon {
+      font-size: 2.7rem;
+      margin-bottom: 18px;
+      color: var(--primary);
+      text-shadow: 0 2px 8px #1273fa22;
+    }
+    .main-card h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: #111;
+      text-align: center;
+    }
+    .main-card p {
+      font-size: 1rem;
+      color: #111;
+      text-align: center;
+      margin-bottom: 0;
+    }
+    @media (max-width: 900px) {
+      .navbar { padding: 24px 16px 0 16px; }
+      .main-cards { gap: 18px; }
+      .main-card { padding: 1.2rem 1rem; min-width: 160px; }
+    }
+    @media (max-width: 600px) {
+      .navbar { flex-direction: column; align-items: flex-start; padding: 18px 6vw 0 6vw; }
+      .hero { margin-top: 24px; }
+      .main-cards { flex-direction: column; gap: 18px; margin-top: 24px; align-items: center; }
+      .main-card { width: 96vw; min-width: 0; max-width: 98vw; padding: 1.2rem 0.5rem; }
+      .bus-select-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.7rem;
+        max-width: 98vw;
+      }
+      .bus-select, .select-btn {
+        border-radius: 8px;
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+      }
+      .select-btn {
+        margin-top: 0.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <div class="brand"><i class="fas fa-bus"></i>BusTrack</div>
+    <div class="navbar-logo">
+      <img src="rit-logo.png" alt="RIT Logo" />
+    </div>
+    <div class="nav-links">
+      <a href="#">Home</a>
+      <a href="contact.html">Contact us</a>
+    </div>
+  </div>
+  <div class="hero">
+    <div class="hero-title">Welcome to BusTrack</div>
+    <div class="hero-subtitle">Your reliable companion for real-time bus tracking and scheduling.</div>
+  </div>
+  <div class="main-cards">
+    <div class="main-card" onclick="redirectTo('driver')">
+      <div class="icon"><i class="fas fa-user-tie"></i></div>
+      <h3>Driver Login</h3>
+      <p>Access the driver dashboard to share your live location and manage your route.</p>
+    </div>
+    <div class="main-card" onclick="redirectTo('student')">
+      <div class="icon"><i class="fas fa-user"></i></div>
+      <h3>Student/Staff Login</h3>
+      <p>Track buses in real-time and check schedules for your selected route.</p>
+    </div>
+  </div>
+  <script>
+    function selectBus() {
+      const busNo = document.getElementById('bus-select').value;
+      if (!busNo) {
+        alert("Please select your bus number first.");
+        return;
+      }
+      localStorage.setItem('selectedBus', busNo);
+      // Optionally, scroll to cards or highlight them
+      document.querySelector('.main-cards').scrollIntoView({behavior: 'smooth'});
+    }
+    function redirectTo(role) {
+      if (role === 'driver') {
+        window.location.href = 'driver-login.html';
+      } else if (role === 'student') {
+        window.location.href = 'student-map.html';
+      }
+    }
+  </script>
+</body>
+</html>

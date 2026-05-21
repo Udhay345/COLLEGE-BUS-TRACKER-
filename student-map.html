@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>RIT Bus Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Montserrat:wght@700&display=swap"
+    rel="stylesheet">
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      width: 100vw;
+      font-family: 'Poppins', sans-serif;
+      overflow: hidden;
+    }
+
+    #map {
+      height: 100vh;
+      width: 100vw;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+
+    .overlay-top {
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1002;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 10px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+      display: flex;
+      gap: 10px;
+    }
+
+    .overlay-top select {
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 15px;
+    }
+
+    .fab-theme {
+      position: absolute;
+      top: 18px;
+      z-index: 1003;
+    }
+
+    .fab-theme {
+      right: 18px;
+    }
+
+    .fab-btn {
+      background: #fff;
+      border: none;
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      width: 48px;
+      height: 48px;
+      font-size: 22px;
+      color: #2196f3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .fab-btn:hover {
+      box-shadow: 0 4px 16px rgba(33, 150, 243, 0.18);
+    }
+
+    .overlay-bottom {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      background: rgba(255, 255, 255, 0.97);
+      padding: 16px;
+      border-radius: 16px;
+      font-size: 1.1em;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+      z-index: 1002;
+    }
+
+    .info-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .info-time {
+      font-size: 2em;
+      font-weight: 700;
+      color: #1976d2;
+    }
+
+    .info-stop {
+      color: #333;
+      font-size: 1.1em;
+    }
+
+    #navPanel {
+      position: absolute;
+      top: 80px;
+      right: 18px;
+      background: #fff;
+      padding: 10px;
+      border-radius: 8px;
+      width: 300px;
+      max-height: 300px;
+      overflow-y: auto;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      display: none;
+      z-index: 1004;
+    }
+
+    .leaflet-routing-container {
+      display: none !important;
+    }
+
+    @media (max-width: 600px) {
+
+      .overlay-top,
+      .overlay-bottom {
+        width: 95vw;
+        left: 2.5vw;
+        transform: none;
+      }
+
+      #navPanel {
+        width: 92vw;
+        right: 4vw;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+
+  <div class="overlay-top">
+    <select id="busDropdown">
+      <option value="R01">R01</option>
+      <option value="R02">R02</option>
+      <option value="R17">R17</option>
+      <option value="R20">R20</option>
+    </select>
+    <select id="busStopDropdown"></select>
+  </div>
+
+  <div class="overlay-bottom" id="distanceInfo">Select a stop to view distance and ETA.</div>
+  <div id="lastUpdated"
+    style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(255, 255, 255, 0.9); padding: 5px 10px; border-radius: 5px; font-size: 0.9em; color: #111;">
+    Last Updated: <span id="lastUpdatedTime"></span></div>
+  <div id="navPanel"></div>
+
+  <!-- Leaflet Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.min.js"></script>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCFhmWzKojcxRX2PiBQum_ulz_XVIAIRdM",
+      authDomain: "ritbustrack.firebaseapp.com",
+      databaseURL: "https://ritbustrack-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "ritbustrack",
+      storageBucket: "ritbustrack.appspot.com",
+      messagingSenderId: "292117697217",
+      appId: "1:292117697217:web:5c6ef49a1b6fef70e9fa40"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const busStops = {
+      R01: [{ name: "Central", lat: 13.0824, lng: 80.2755 }, { name: "Egmore", lat: 13.0732, lng: 80.2609 }],
+      R02: [{ name: "Mudichur", lat: 12.9150, lng: 80.0720 }, { name: "Tambaram", lat: 12.9249, lng: 80.1000 }],
+      R17: [{ name: "Kodambakkam", lat: 13.0521, lng: 80.2255 }, { name: "Vadapalani", lat: 13.0500, lng: 80.2121 }, { name: "poonamalle", lat: 13.0473, lng: 80.0945 }, { name: "valasaravakkam", lat: 13.0403, lng: 80.1723 }],
+      R20: [{ name: "Veppambattu", lat: 13.1291, lng: 80.0076 }, { name: "Thirumazhisai", lat: 13.0525, lng: 80.0603 }]
+    };
+
+    const map = L.map("map").setView([12.95, 80.14], 13);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+
+    const busIcon = L.icon({
+      iconUrl: "bus_stop.png",
+      iconSize: [48, 48],
+      iconAnchor: [24, 48],
+      popupAnchor: [0, -48]
+    });
+
+    const driverIcon = L.icon({
+      iconUrl: "bus_driver.png",
+      iconSize: [48, 48],
+      iconAnchor: [24, 48],
+      popupAnchor: [0, -48]
+    });
+
+    let busMarker = L.marker([12.95, 80.14], { icon: driverIcon }).addTo(map);
+    let stopMarkers = [];
+    let routingControl;
+
+    const busDropdown = document.getElementById("busDropdown");
+    const stopDropdown = document.getElementById("busStopDropdown");
+    const distanceInfo = document.getElementById("distanceInfo");
+    const navPanel = document.getElementById("navPanel");
+    const lastUpdatedTime = document.getElementById("lastUpdatedTime");
+
+    function loadStops(routeId) {
+      stopMarkers.forEach(m => map.removeLayer(m));
+      stopMarkers = [];
+
+      stopDropdown.innerHTML = "";
+      busStops[routeId].forEach(stop => {
+        const opt = document.createElement("option");
+        opt.value = `${stop.lat},${stop.lng}`;
+        opt.textContent = stop.name;
+        stopDropdown.appendChild(opt);
+
+        const marker = L.marker([stop.lat, stop.lng], { icon: busIcon }).addTo(map);
+        marker.bindPopup(`<b>${stop.name}</b>`);
+        stopMarkers.push(marker);
+      });
+    }
+
+    function drawRoute(from, to) {
+      if (routingControl) map.removeControl(routingControl);
+
+      routingControl = L.Routing.control({
+        waypoints: [L.latLng(from[0], from[1]), L.latLng(to[0], to[1])],
+        routeWhileDragging: false,
+        addWaypoints: false,
+        draggableWaypoints: false,
+        showAlternatives: false,
+        createMarker: () => null,
+        lineOptions: { styles: [{ color: "blue", opacity: 0.7, weight: 6 }] }
+      }).addTo(map);
+
+      routingControl.on("routesfound", e => {
+        const r = e.routes[0];
+        const dist = r.summary.totalDistance / 1000;
+        const time = r.summary.totalTime / 60;
+
+        distanceInfo.innerHTML = `<div class='info-row'><span class='info-time'>${time.toFixed(1)} min</span><span class='info-stop'>Distance: ${dist.toFixed(2)} km</span></div>`;
+        navPanel.innerHTML = "";
+      });
+    }
+
+    function updateBusLocation(routeId) {
+      db.ref(`buses/${routeId}`).on("value", snap => {
+        const data = snap.val();
+        if (data && data.lat && data.lng) {
+          const latLng = [data.lat, data.lng];
+          busMarker.setLatLng(latLng);
+          const stop = stopDropdown.value.split(",").map(Number);
+          drawRoute(latLng, stop);
+          lastUpdatedTime.textContent = new Date().toLocaleTimeString();
+        }
+      });
+    }
+
+    busDropdown.addEventListener("change", () => {
+      const route = busDropdown.value;
+      loadStops(route);
+      updateBusLocation(route);
+      stopDropdown.dispatchEvent(new Event("change"));
+    });
+
+    stopDropdown.addEventListener("change", () => {
+      const stop = stopDropdown.value.split(",").map(Number);
+      drawRoute([busMarker.getLatLng().lat, busMarker.getLatLng().lng], stop);
+    });
+
+    // Initial load
+    loadStops(busDropdown.value);
+    updateBusLocation(busDropdown.value);
+    stopDropdown.dispatchEvent(new Event("change"));
+  </script>
+</body>
+
+</html>

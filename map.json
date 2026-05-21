@@ -1,0 +1,44 @@
+{
+  "buses": {
+    "R01": {
+      "lat": 37.7749,
+      "lng": -122.4194,
+      "status": "on_the_way",
+      "lastUpdated": "2025-05-06T12:30:00Z",
+      "route": "Downtown to Airport",
+      "speed": 3000,
+      "busID": "R01",
+      "password": "123"
+    },
+    "R02": {
+      "lat": 40.7128,
+      "lng": -74.0060,
+      "status": "arrived",
+      "lastUpdated": "2025-05-06T12:32:00Z",
+      "route": "Main Station to Central Park",
+      "speed": 25,
+      "busID": "R02",
+      "password": "123"
+    },
+    "R17": {
+      "lat": 42.3601,
+      "lng": -71.0589,
+      "status": "on_the_way",
+      "lastUpdated": "2025-05-06T12:35:00Z",
+      "route": "Campus to Tech Park",
+      "speed": 28,
+      "busID": "R17",
+      "password": "123"
+    },
+    "R20": {
+      "lat": 13.1291,
+      "lng": 80.0076,
+      "status": "idle",
+      "lastUpdated": "2025-05-06T12:40:00Z",
+      "route": "Main Station to South Gate",
+      "speed": 0,
+      "busID": "R20",
+      "password": "123"
+    }
+  }
+}

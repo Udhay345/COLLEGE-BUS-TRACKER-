@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>RIT Bus tracker </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Montserrat:wght@700&display=swap"
+    rel="stylesheet">
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      font-family: 'Poppins', sans-serif;
+      overflow: hidden;
+    }
+
+    #map {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+    }
+
+    .bottom-controls {
+      position: absolute;
+      left: 50%;
+      bottom: 110px;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: row;
+      gap: 18px;
+      z-index: 1003;
+      justify-content: center;
+    }
+
+    .pill-btn {
+      padding: 10px 28px;
+      background: #2196f3;
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(33, 150, 243, 0.10);
+      transition: background 0.2s, color 0.2s, transform 0.18s;
+      outline: none;
+      min-width: 110px;
+      letter-spacing: 0.5px;
+    }
+
+    .pill-btn:active {
+      transform: scale(0.96);
+    }
+
+    .pill-btn:hover {
+      background: #1976d2;
+      color: #fff;
+      transform: scale(1.06);
+    }
+
+    .overlay-bottom {
+      position: absolute;
+      left: 50%;
+      bottom: 32px;
+      transform: translateX(-50%);
+      width: 90%;
+      background: rgba(255, 255, 255, 0.97);
+      border-radius: 18px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.10);
+      padding: 18px 20px 14px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      z-index: 1002;
+      font-size: 1.1em;
+      min-height: 48px;
+      justify-content: center;
+    }
+
+    .overlay-bottom strong {
+      color: #1976d2;
+      font-weight: 600;
+      font-size: 1.1em;
+    }
+
+    .info-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .info-time {
+      font-size: 2em;
+      font-weight: 700;
+      color: #1976d2;
+      margin-right: 8px;
+    }
+
+    .info-stop {
+      font-size: 1.1em;
+      color: #333;
+    }
+
+    .last-updated {
+      font-size: 0.9em;
+      color: #888;
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(5px);
+    }
+
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #2196f3;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    @media (max-width: 600px) {
+
+      .overlay-bottom,
+      .bottom-controls {
+        width: 98vw;
+        left: 1vw;
+        transform: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+  <div class="bottom-controls">
+    <button class="pill-btn" onclick="startLocation()" id="startBtn">Start Location</button>
+    <button class="pill-btn" onclick="stopLocation()" id="stopBtn">End Location</button>
+  </div>
+  <div class="overlay-bottom" id="busInfo">Waiting for location...</div>
+  <div class="loading">
+    <div class="loading-spinner"></div>
+  </div>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCFhmWzKojcxRX2PiBQum_ulz_XVIAIRdM"></script>
+  <script>
+    let isSharing = false;
+    const firebaseConfig = {
+      apiKey: "AIzaSyCFhmWzKojcxRX2PiBQum_ulz_XVIAIRdM",
+      authDomain: "ritbustrack.firebaseapp.com",
+      databaseURL: "https://ritbustrack-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "ritbustrack",
+      storageBucket: "ritbustrack.appspot.com",
+      messagingSenderId: "292117697217",
+      appId: "1:292117697217:web:5c6ef49a1b6fef70e9fa40",
+      measurementId: "G-NGVSNHX05P"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const urlParams = new URLSearchParams(window.location.search);
+    const busId = urlParams.get("bus") || "default_bus";
+    let map, busMarker;
+    function initMap() {
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: 12.95, lng: 80.14 },
+        zoom: 15,
+        disableDefaultUI: true
+      });
+      busMarker = new google.maps.Marker({
+        position: { lat: 12.95, lng: 80.14 },
+        map: map,
+        title: "Your Location"
+      });
+    }
+    function updateBusInfo(busData) {
+      const busInfoElement = document.getElementById('busInfo');
+      busInfoElement.innerHTML = `
+        <div class='info-row'><span class='info-time'>${busData.speed ? busData.speed + ' km/h' : '--'}</span><span class='info-stop'>Status: ${busData.status || 'N/A'}</span></div>
+        <div><strong>Route:</strong> ${busData.route || 'N/A'}</div>
+        <div class='last-updated'>🕒 Last Updated: ${busData.lastUpdated ? new Date(busData.lastUpdated).toLocaleTimeString() : '--'}</div>
+      `;
+    }
+    let watchID = null;
+    function setStatusBar() {
+      document.getElementById('busInfo').innerHTML = isSharing
+        ? 'Location is sharing'
+        : 'Waiting for location...';
+    }
+    function startLocation() {
+      if (navigator.geolocation) {
+        isSharing = true;
+        setStatusBar();
+        watchID = navigator.geolocation.watchPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            const pos = { lat: latitude, lng: longitude };
+            busMarker.setPosition(pos);
+            map.setCenter(pos);
+            db.ref(`buses/${busId}`).set({
+              lat: latitude,
+              lng: longitude,
+              timestamp: Date.now()
+            }).then(() => {
+              console.log("Location updated:", pos);
+            }).catch((err) => {
+              console.error("Firebase write error:", err);
+              alert("Failed to update Firebase location.");
+            });
+          },
+          (err) => alert("Geolocation error: " + err.message),
+          { enableHighAccuracy: true }
+        );
+      } else {
+        alert("Geolocation not supported.");
+      }
+    }
+    function stopLocation() {
+      if (watchID !== null) {
+        navigator.geolocation.clearWatch(watchID);
+        watchID = null;
+        isSharing = false;
+        setStatusBar();
+        db.ref(`buses/${busId}`).remove()
+          .then(() => {
+            alert("Live location stopped and removed from Firebase.");
+          })
+          .catch((err) => {
+            console.error("Error removing from Firebase:", err);
+            alert("Failed to remove location from Firebase.");
+          });
+      } else {
+        alert("Live location is not running.");
+      }
+    }
+    function fetchBusData() {
+      db.ref(`buses/${busId}`).once('value').then(snapshot => {
+        const busData = snapshot.val();
+        if (busData) {
+          updateBusInfo(busData);
+          const pos = { lat: busData.lat, lng: busData.lng };
+          busMarker.setPosition(pos);
+          map.setCenter(pos);
+        }
+      }).catch(error => {
+        console.error("Error fetching bus data:", error);
+        alert("Failed to load bus data.");
+      });
+    }
+    window.addEventListener("beforeunload", () => {
+      if (watchID !== null) {
+        navigator.geolocation.clearWatch(watchID);
+        db.ref(`buses/${busId}`).remove();
+      }
+    });
+    window.addEventListener('load', function () {
+      initMap();
+      setStatusBar();
+      fetchBusData();
+      document.querySelector('.loading').style.display = 'none';
+    });
+  </script>
+</body>
+
+</html>
