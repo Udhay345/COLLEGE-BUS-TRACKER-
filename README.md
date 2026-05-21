@@ -1,5 +1,8 @@
 # 🚌 RIT Bus Tracker
 
+[![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
+![Non-Commercial](https://img.shields.io/badge/Commercial%20Use-❌%20Not%20Allowed-red)
+
 A real-time college bus tracking web application for **Rajalakshmi Institute of Technology (RIT)**. Drivers share their live GPS location via Firebase Realtime Database, and students can track buses and calculate ETAs from the student-facing map.
 
 ![App Preview](bus-vector.webp)
@@ -248,7 +251,19 @@ The app supports the following configurable routes (update in `student-map.html`
 
 ## 📄 License
 
-This project is open source and available under the [MIT License](LICENSE).
+This project is licensed under the **Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)** license.
+
+**You are free to:**
+- ✅ Share — copy and redistribute the material
+- ✅ Adapt — remix, transform, and build upon the material
+
+**Under the following terms:**
+- 📌 **Attribution** — You must give appropriate credit to the original author
+- 🚫 **NonCommercial** — You **may NOT** use this project for commercial purposes
+
+> This means you cannot sell this software, use it in a paid product/service, deploy it as a SaaS offering, or use it in any context involving monetary compensation.
+
+See the full [LICENSE](LICENSE) file for details, or visit [creativecommons.org/licenses/by-nc/4.0](https://creativecommons.org/licenses/by-nc/4.0/).
 
 ---
 
